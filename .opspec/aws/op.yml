@@ -1,5 +1,4 @@
 ---
-# DONE
 name: aws
 description: run tests for AWS
 inputs:
@@ -114,15 +113,15 @@ inputs:
     string:
       constraints: { minLength: 1 }
       default: centos
-  githubUsername:
-    string:
-      constraints: { minLength: 1 }
-      description: username for auth
-  githubPassword:
-    string:
-      constraints: { minLength: 1 }
-      description: password for auth (or personal access token)
-      isSecret: true
+#  githubUsername:
+#    string:
+#      constraints: { minLength: 1 }
+#      description: username for auth
+#  githubPassword:
+#    string:
+#      constraints: { minLength: 1 }
+#      description: password for auth (or personal access token)
+#      isSecret: true
 
   mount_bin_runroot:
     dir:
@@ -134,8 +133,8 @@ inputs:
     dir:
       description: the mount point path for all things bootstrap
   mount_deploy_runroot:
-    dir:
-      description: the mount point path for all things deployment
+     dir:
+       description: the mount point path for all things deployment
   context:
     dir:
       description: context for build
@@ -196,6 +195,30 @@ run:
           os_type:
           mount_bin_runroot:
           mount_bootstrap_runroot:
+          context:
+          dockerfile:
+          dockerSocket:
+          dindcontainer:
+        outputs:
+          private_key:
+    - op:
+        ref: aws/03-deploy-k8s
+        inputs:
+          HOMEDir:
+          CLUSTER_ID:
+          USER:
+          GID:
+          UID:
+          AWS_DEFAULT_REGION:
+          OS_TYPE:
+          os_type:
+          cluster_id:
+          aws_default_region:
+          mount_bin_runroot:
+          mount_deploy_runroot:
+#         githubPassword:
+#         githubUsername:
+          private_key:
           context:
           dockerfile:
           dockerSocket:

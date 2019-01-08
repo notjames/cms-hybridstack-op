@@ -1,13 +1,7 @@
 ---
-name: aws/02-bootstrap-cmc-cluster
-description: bootstrap management plane
+name: aws/03-deploy-gardener/prepare-mgr-cluster
+description: prepare cmc master host for gardener bits
 inputs:
-  HOMEPath:
-    string:
-      description: HOME env variable as a string
-  HOMEDir:
-    dir:
-      description: HOME env variable as a directory
   USER:
     string:
       description: USER env variable
@@ -21,20 +15,16 @@ inputs:
     string:
       description: CLUSTER_ID environment variable
       default: "nil"
-  CLUSTER_TYPE:
-    string:
-      constraints: { enum: [ manager, managed, nil ] }
-      description: CLUSTER_TYPE environment variable if set.
-      default: "nil"
+  HOMEDir:
+    dir:
+      description: HOME env variable as a directory
   OS_TYPE:
     string:
       description: OS_TYPE environment variable if set.
       default: centos
-  AWS_DEFAULT_REGION:
+  private_key:
     string:
-      description: default AWS region environment variable if set.
-      default: "us-west-2"
-
+      description: "This is a base64 encoded private key. These are not the bits you're looking for"
   cluster_id:
     string:
       constraints: { minLength: 1 }
@@ -44,17 +34,30 @@ inputs:
     string:
       constraints: { minLength: 1 }
       default: centos
+#  githubUsername:
+#    string:
+#      constraints: { minLength: 1 }
+#      description: username for auth
+#  githubPassword:
+#    string:
+#      constraints: { minLength: 1 }
+#      description: password for auth (or personal access token)
+#      isSecret: true
   aws_default_region:
+    string:
+      constraints: { minLength: 1 }
+      description: default AWS region
+      default: us-west-2
+  AWS_DEFAULT_REGION:
     string:
       description: default AWS region environment variable if set.
       default: "us-west-2"
-
   mount_bin_runroot:
     dir:
       description: the bin directory containing scripts used for all AWS op steps.
-  mount_bootstrap_runroot:
+  mount_deploy_runroot:
     dir:
-      description: the mount point path for all things infrasructure
+      description: the mount point path for all things deployment
   context:
     dir:
       description: context for build
@@ -78,9 +81,9 @@ outputs:
   aws_secret_key:
     string:
       description: exported AWS creds access key
-  private_key:
-    string:
-      description: exported from b64_encoded_key
+  kubeConfig:
+    file:
+      description: kubeconfig from manager master
 
 run:
   serial:
@@ -96,50 +99,37 @@ run:
       sockets:
         /var/run/docker.sock: dockerSocket
       cmd:
-        - bash
+        - sh
         - -ce
         - |
           bin/export_aws_creds.sh | tr ' ' '\n'
 
   - container:
       image: { ref: $(dindcontainer) }
-      stdOut:
-        CLUSTER_PRIVATE_KEY=: private_key
       dirs:
+        /root: $(mount_deploy_runroot)
         /root/bin: $(mount_bin_runroot)
+        /root/.aws: $(HOMEDir/.aws)
         /root/.ssh: $(HOMEDir/.ssh)
+        /root/.kube:
+        /var/tmp:
       workDir: /root
-      sockets:
-        /var/run/docker.sock: dockerSocket
-      envVars:
-        CLUSTER_ID: $(CLUSTER_ID)
-        _cluster_id: $(cluster_id)
       files:
-        /cmd_1.sh:
-      cmd: [ /cmd_1.sh ]
-
-  - container:
-      image: { ref: $(dindcontainer) }
-      dirs:
-        /root: $(mount_bootstrap_runroot)
-        /root/bin: $(mount_bin_runroot)
-        /root/.ssh: $(HOMEDir/.ssh)
-      workDir: /root
+        /cmd.sh:
+        /var/tmp/config: $(kubeConfig)
       sockets:
         /var/run/docker.sock: dockerSocket
       envVars:
         AWS_ACCESS_KEY_ID: $(aws_access_id)
         AWS_SECRET_ACCESS_KEY: $(aws_secret_key)
-        CLUSTER_PRIVATE_KEY: $(private_key)
+        AWS_DEFAULT_REGION: $(AWS_DEFAULT_REGION)
+        _aws_default_region: $(aws_default_region)
         CLUSTER_ID: $(CLUSTER_ID)
+        CLUSTER_PRIVATE_KEY: $(private_key)
         _cluster_id: $(cluster_id)
-        USERNAME: $(OS_TYPE)
-        _os_type: (os_type)
-        AWS_DEFAULT_REGION:
+        OS_TYPE: $(OS_TYPE)
+        _os_type: $(os_type)
         OWNER_USER: $(USER)
         OWNER_UID: $(UID)
         OWNER_GID: $(GID)
-        HOME: $(HOMEPath)
-      files:
-        /cmd_2.sh:
-      cmd: [ /cmd_2.sh ]
+      cmd: [ /cmd.sh ]

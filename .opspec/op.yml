@@ -113,15 +113,15 @@ inputs:
     string:
       constraints: { minLength: 1 }
       default: centos
-  githubUsername:
-    string:
-      constraints: { minLength: 1 }
-      description: username for auth
-  githubPassword:
-    string:
-      constraints: { minLength: 1 }
-      description: password for auth (or personal access token)
-      isSecret: true
+#  githubUsername:
+#    string:
+#      constraints: { minLength: 1 }
+#      description: username for auth
+#  githubPassword:
+#    string:
+#      constraints: { minLength: 1 }
+#      description: password for auth (or personal access token)
+#      isSecret: true
 
   mount_bin_runroot:
     dir:
@@ -133,8 +133,8 @@ inputs:
     dir:
       description: the mount point path for all things bootstrap
   mount_deploy_runroot:
-    dir:
-      description: the mount point path for all things deployment
+     dir:
+       description: the mount point path for all things deployment
   context:
     dir:
       description: context for build
@@ -190,8 +190,8 @@ run:
           instance_os_ver:
           OS_TYPE:
           os_type:
-          githubUsername:
-          githubPassword:
+#         githubUsername:
+#         githubPassword:
           mount_bin_runroot:
           mount_bootstrap_runroot:
           mount_infra_runroot:

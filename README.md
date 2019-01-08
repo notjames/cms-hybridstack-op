@@ -25,8 +25,13 @@ Running the whole thing right now:
     * `export githubUsername=<username> githubPassword=<application token>`
     * OR in one line: `export UID GID=$(id -g) CLUSTER_ID=<CLUSTER_ID> githubUsername=<your_gh_username> githubPassword=<your_gh_token>`
   * Make everything happen:
-    * From the parent directory of the `.opspec` directory run the following:
-    `opctl run .`
+    * From the parent directory of the `.opspec` directory IE the root of the repo, run the following:
+    `$ opctl run .`
+    * Once completed, find your KUBECONFIG:
+    `$ export KUBECONFIG=$(find .opspec -wholename '.*/.kube/config')`
+    * Verify it works
+    `$ kubectl get nodes`
+    * Finally, the cma-vmware JSON manifest is auto-generated. You can find it (from your PWD after opctl is finished running) in `.opspec/aws/03-deploy-k8s/prepare-mgr-cluster/var/tmp/manifests`
 
 ### OK, but you want to know the details? Explanation:
 The following guidelines are necessary to run op:
@@ -97,7 +102,10 @@ Most of this is up to date, but there may be some disparate information as this 
     * This command will bootstrap the worker and join it to the master
 
 ## Deploying CMC charts (WIP -- currently incomplete)
-* Up to this point we have managed to instantiate AWS nodes and install Kubernetes in a control plane and on worker nodes, which have joined to the control plane. Now we need to install our application software for cluster management.
+  * Up to this point we have managed to instantiate AWS nodes and install Kubernetes in a control plane and on worker nodes, which have joined to the control plane. Now we need to install our application software for cluster management.
     * It  will then install helm
     * It tries to install the cmc stuff, but that currently does not yet work due to restrictions on repos among other things.
+
+## Cleanup items yet to be done
+  * Currently, a teardown op doesn't yet exist so you will need to tear down the cloudformation stacks created. There are two stacks that get created. They are named from your $CLUSTER_ID setting. You can run (though, you will likely need to run two separate delete commands): `$ aws cloudformation --delete-stack --stack-name {manager,managed}-<stackname>`
 

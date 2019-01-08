@@ -161,7 +161,7 @@ run:
         - sh
         - -ce
         - |
-          bin/export_aws_creds | tr ' ' '\n'
+          bin/export_aws_creds.sh | tr ' ' '\n'
 
   - container:
       image: { ref: $(dindcontainer) }

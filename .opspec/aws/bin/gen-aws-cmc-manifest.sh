@@ -81,11 +81,9 @@ jo_control_planes()
   local nodes hostname
 
   nodes="$*"
-  echo "$nodes"
-  exit
-  hostname=$(jq '.manager_controllers[].name' <<< "$nodes")
+  hostname=$(jq -Mr '.manager_controllers[].name' <<< "$nodes")
 
-  jo username="$CLUSTER_USERNAME" port=22 password="" \
+  jo username="${CLUSTER_USERNAME:-$OS_TYPE}" port=22 password="" \
     labels=$(jo -a $(jo name=Name value="$hostname"))
 }
 
@@ -94,11 +92,9 @@ jo_worker_nodes()
   local nodes hostname
 
   nodes="$*"
-  echo "$nodes"
-  exit
-  hostname=$(jq '.worker_nodes[].name' <<< "$nodes")
+  hostname=$(jq -Mr '.manager_nodes[].name' <<< "$nodes")
 
-  jo username="$CLUSTER_USERNAME" host="" port=22 password="" \
+  jo username="${CLUSTER_USERNAME:-$OS_TYPE}" host="" port=22 password="" \
     labels=$(jo -a $(jo name=Name value="$hostname"))
 }
 
@@ -116,7 +112,7 @@ create_worker_cluster_manifest()
      network_fabric=flannel \
      api_endpont="" \
      private_key="$CLUSTER_PRIVATE_KEY" \
-     control_plane_nodes=$(jo_control_planes "$nodes")\
+     control_plane_nodes=$(jo_control_planes "$nodes") \
      worker_nodes=$(jo_worker_nodes "$nodes") | \
      sed 's/null/""/g' | json2yaml -
 }
@@ -152,14 +148,15 @@ Usage: $0 <--get <manager|managed>> [--create-manifest|-c] [--help|-h]
     exit 16
   }
 
-BASEDIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
-OUTDIR=${BASEDIR}/out
+#BASEDIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
+#OUTDIR=${BASEDIR}/manifests
+OUTDIR=/var/tmp/manifests
 KUBELET_VERSION=${KUBELET_VERSION:-1.10.6}
 REQS=(aws yaml2json json2yaml jo jq)
 create_manifest=0
 TEXT=0
 
-create_cluster_yaml="$OUTDIR/create-$CLUSTER_ID.yaml"
+create_cluster_base="$OUTDIR/create-$CLUSTER_ID"
 
 [[ $# == 0 ]] && usage && exit 11
 
@@ -184,8 +181,8 @@ while [[ "$#" -gt 0 ]]; do
       exit 12
     ;;
     *) echo "Do not understand argument: $arg"
-       usage
-       exit 10
+      usage
+      exit 10
     ;;
   esac
   shift
@@ -215,8 +212,12 @@ if nodes=$($get_nodes "$CLUSTER_ID") 2>/dev/null; then
         exit 59
       fi
 
-      if ! create_worker_cluster_manifest "$nodes" > "$create_cluster_yaml"; then
+      if ! create_worker_cluster_manifest "$nodes" > "$create_cluster_base.yaml"; then
         exit 60
+      else
+        if [[ -s "$create_cluster_base.yaml" ]]; then
+          yaml2json "$create_cluster_base.yaml" > "$create_cluster_base.json"
+        fi
       fi
     else
       echo "Since manager clusters do not yet need a manifest, I don't know how to make one."

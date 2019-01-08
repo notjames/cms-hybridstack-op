@@ -1,0 +1,16 @@
+---
+name: aws/03-deploy-gardener/deploy-tiller
+description: deploy tiller in cmc
+inputs:
+  kubeConfig:
+    file:
+      description: kubeconfig file for the target environment
+run:
+  serial:
+    - container:
+        image: { ref: 'dtzar/helm-kubectl' }
+        cmd: [ /cmd.sh ]
+        files:
+          /tiller.yaml:
+          /cmd.sh:
+          /root/.kube/config: $(kubeConfig)

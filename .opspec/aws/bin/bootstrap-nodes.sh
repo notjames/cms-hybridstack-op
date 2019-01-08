@@ -40,8 +40,7 @@ gen_SANs_addrs()
 
   my_ip=$(get_ipaddr)
 
-  for addr in $my_ip $(gen-aws-cmc-manifest.sh --get manager | jq -Mr '.manager_controllers[0].address') \
-              $(dig +short PTR "$my_ip"); do
+  for addr in $my_ip $(gen-aws-cmc-manifest.sh --get manager | jq -Mr '.manager_controllers[0].address'); do
     sans+=$addr,
   done
 

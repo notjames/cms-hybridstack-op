@@ -3,12 +3,9 @@ label Maintainer="Jim Conner <snafu.x@gmail.com,james.c@samsung.com>",
 label copyright="(c) 2018 Samsung Corp."
 label license="Apache2 license: https://www.apache.org/licenses"
 
-VOLUME /var/tmp/work
-WORKDIR /var/tmp/work
-
 RUN DEBIAN_FRONTEND=noninteractive && \
     apt update && \
-    apt install -y bash python-pip openssh-client wget gettext curl jq git ruby apt-transport-https && \
+    apt install -y bash python-pip openssh-client wget gettext curl jq git ruby apt-transport-https dnsutils && \
     curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
     echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list && \
     apt update && apt install -y kubectl && \

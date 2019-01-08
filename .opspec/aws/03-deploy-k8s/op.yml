@@ -1,0 +1,106 @@
+---
+name: aws/03-deploy-gardener
+description: deploy components of a cmc
+inputs:
+  USER:
+    string:
+      description: USER env variable
+  GID:
+    number:
+      description: GID env var
+  UID:
+    number:
+      description: UID env var
+#  githubUsername:
+#    string:
+#      constraints: { minLength: 1 }
+#      description: username for auth
+#  githubPassword:
+#    string:
+#      constraints: { minLength: 1 }
+#      description: password for auth (or personal access token)
+#      isSecret: true
+  HOMEDir:
+    dir:
+      description: HOME env variable as a directory
+  AWS_DEFAULT_REGION:
+    string:
+      description: default AWS region environment variable if set.
+      default: "us-west-2"
+  OS_TYPE:
+    string:
+      description: OS_TYPE environment variable if set.
+      default: centos
+  CLUSTER_ID:
+    string:
+      description: CLUSTER_ID environment variable
+      default: "nil"
+  cluster_id:
+    string:
+      constraints: { minLength: 1 }
+      description: Name of the cluster
+      default: "nil"
+  os_type:
+    string:
+      constraints: { minLength: 1 }
+      default: centos
+  aws_default_region:
+    string:
+      constraints: { minLength: 1 }
+      description: default AWS region
+      default: us-west-2
+  mount_bin_runroot:
+    dir:
+      description: the bin directory containing scripts used for all AWS op steps.
+  mount_deploy_runroot:
+    dir:
+      description: the mount point path for all things deployment
+  context:
+    dir:
+      description: context for build
+      default: .opspec/aws
+  dockerfile:
+    file:
+      description: DinD dockerfile
+      default: .opspec/aws/Dockerfile
+  dockerSocket:
+    socket:
+      description: access to docker on node
+  dindcontainer:
+    string:
+      description: "dind runtime container"
+      default: "cmc-build:latest"
+  private_key:
+    string:
+      description: "This is a base64 encoded private key. These are not the bits you're looking for"
+run:
+  serial:
+    - op:
+        ref: 03-deploy-k8s/prepare-mgr-cluster
+        inputs:
+          USER:
+          GID:
+          UID:
+          AWS_DEFAULT_REGION:
+          aws_default_region:
+          OS_TYPE:
+          os_type:
+          HOMEDir:
+          CLUSTER_ID:
+          OS_TYPE:
+          private_key:
+          cluster_id:
+          mount_bin_runroot:
+          mount_deploy_runroot:
+          context:
+          dockerfile:
+          dockerSocket:
+          dindcontainer:
+#          githubPassword:
+#          githubUsername:
+        outputs:
+          kubeConfig:
+    - op:
+        ref: 03-deploy-k8s/deploy-tiller
+        inputs:
+          kubeConfig:

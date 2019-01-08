@@ -9,7 +9,7 @@ mount_infra_runroot: .opspec/aws/01-infrastructure/
 mount_bootstrap_runroot: .opspec/aws/02-bootstrap-cmc-cluster/
 
 # 03-deploy-cmc - deploys the CMC manifests
-mount_deploy_runroot: .opspec/aws/03-deploy-cmc/
+mount_deploy_runroot: .opspec/aws/03-deploy-k8s/
 
 # the host machine's docker.sock path allowing opctl
 # to share its built containers with the host machine
