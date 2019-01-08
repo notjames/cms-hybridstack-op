@@ -1,0 +1,59 @@
+---
+# Done
+name: create-dind
+description: create the DinD container
+inputs:
+  HOMEPath:
+    string:
+      description: HOME env variable as a string
+  HOMEDir:
+    dir:
+      description: HOME env variable as a directory
+  USER:
+    string:
+      description: USER env variable
+  GID:
+    number:
+      description: GID env var
+  UID:
+    number:
+      description: UID env var
+  context:
+    dir:
+      description: context for build
+      default: .opspec/aws
+  dockerfile:
+    file:
+      description: test dockerfile
+      default: .opspec/aws/Dockerfile
+  dockerSocket:
+    socket:
+      description: access to docker on node
+  dindcontainer:
+    string:
+      description: "dind runtime container"
+      default: "cmc-build:latest"
+
+run:
+  serial:
+  - container:
+      image: { ref: 'docker:18.09.0-dind' }
+      files:
+        /Dockerfile: $(dockerfile)
+      dirs:
+        /buildcontext: $(context)
+      sockets:
+        /var/run/docker.sock: dockerSocket
+      envVars:
+        container: $(dindcontainer)
+      cmd:
+        - sh
+        - -ce
+        - |
+          cat /Dockerfile | docker image build \
+            --build-arg OWNER_USER=$(USER) \
+            --build-arg OWNER_UID=$(UID) \
+            --build-arg OWNER_GID=$(GID) \
+            --build-arg OWNER_HOME=$(HOMEPath) \
+            -t "$container" -
+

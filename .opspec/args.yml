@@ -1,0 +1,28 @@
+---
+# The bin directory located in the root AWS directory
+mount_bin_runroot: .opspec/aws/bin/
+
+# 01-infratructure - performs the AWS cloudformation
+mount_infra_runroot: .opspec/aws/01-infrastructure/
+
+# 02-cmc-bootstrap - installs the base K8S software
+mount_bootstrap_runroot: .opspec/aws/02-bootstrap-cmc-cluster/
+
+# 03-deploy-cmc - deploys the CMC manifests
+mount_deploy_runroot: .opspec/aws/03-deploy-cmc/
+
+# the host machine's docker.sock path allowing opctl
+# to share its built containers with the host machine
+# so it doesn't build and rebuild containers on every
+# op.
+dockerSocket: /var/run/docker.sock
+
+# cma-vmware
+enableVMware: true
+
+# these four variables are necessary for the docker
+# container(s) to properly work with your key store.
+HOMEPath: $(HOME)
+HOMEDir: $(HOME)
+UID: $(UID)
+GID: $(GID)
