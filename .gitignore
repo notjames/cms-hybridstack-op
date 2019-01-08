@@ -1,10 +1,10 @@
 **/join_string.txt
-var/**
+var/
 /var
-etc/**
-usr/**
+etc/
+usr/
 root/
 /root
-tmp/**
+tmp/
 *.env
-**/env
+/env

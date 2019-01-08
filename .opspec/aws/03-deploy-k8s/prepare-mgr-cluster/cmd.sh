@@ -35,16 +35,17 @@ su "$OWNER_USER" -c "scp $ssh_opts:.kube/config $tmp_config"
 orig_server=$(yaml2json $tmp_config | jq -Mr '.clusters[0].cluster.server')
 new_master=$(echo "$orig_server" | sed -r 's#(https?://).*(:[0-9]+)#'"\1$master\2"'#')
 
-# alter the IP address to use 127.1 and make this our "working" config
+# alter the IP address from the internal AWS IP to the external facing IP address.
 yaml2json $tmp_config | \
   jq --arg addr "$new_master" -Mr --slurp '.[].clusters[].cluster.server |= $addr | .[]' | \
   json2yaml - > "$HOME"/.kube/config
 
-cat "$HOME"/.kube/config
-sleep 2
+#cat "$HOME"/.kube/config
+#sleep 2
 # copy the working copy to a static location so future ops can get it.
 cp "$HOME"/.kube/config /var/tmp/config
 
 kubectl get nodes
 
+# generate the cma-vmware manifest
 bin/gen-aws-cmc-manifest.sh --get managed -c
