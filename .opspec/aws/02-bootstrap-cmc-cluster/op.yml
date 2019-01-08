@@ -1,0 +1,145 @@
+---
+name: aws/02-bootstrap-cmc-cluster
+description: bootstrap management plane
+inputs:
+  HOMEPath:
+    string:
+      description: HOME env variable as a string
+  HOMEDir:
+    dir:
+      description: HOME env variable as a directory
+  USER:
+    string:
+      description: USER env variable
+  GID:
+    number:
+      description: GID env var
+  UID:
+    number:
+      description: UID env var
+  CLUSTER_ID:
+    string:
+      description: CLUSTER_ID environment variable
+      default: "nil"
+  CLUSTER_TYPE:
+    string:
+      constraints: { enum: [ manager, managed, nil ] }
+      description: CLUSTER_TYPE environment variable if set.
+      default: "nil"
+  OS_TYPE:
+    string:
+      description: OS_TYPE environment variable if set.
+      default: centos
+  AWS_DEFAULT_REGION:
+    string:
+      description: default AWS region environment variable if set.
+      default: "us-west-2"
+
+  cluster_id:
+    string:
+      constraints: { minLength: 1 }
+      description: Name of the cluster
+      default: "nil"
+  os_type:
+    string:
+      constraints: { minLength: 1 }
+      default: centos
+  aws_default_region:
+    string:
+      description: default AWS region environment variable if set.
+      default: "us-west-2"
+
+  mount_bin_runroot:
+    dir:
+      description: the bin directory containing scripts used for all AWS op steps.
+  mount_bootstrap_runroot:
+    dir:
+      description: the mount point path for all things infrasructure
+  context:
+    dir:
+      description: context for build
+      default: .opspec/aws
+  dockerfile:
+    file:
+      description: DinD dockerfile
+      default: .opspec/aws/Dockerfile
+  dockerSocket:
+    socket:
+      description: access to docker on node
+  dindcontainer:
+    string:
+      description: "dind runtime container"
+      default: "cmc-build:latest"
+
+outputs:
+  aws_access_id:
+    string:
+      description: exported AWS creds access id
+  aws_secret_key:
+    string:
+      description: exported AWS creds access key
+  private_key:
+    string:
+      description: exported from b64_encoded_key
+
+run:
+  serial:
+  - container:
+      image: { ref: $(dindcontainer) }
+      stdOut:
+        AWS_ACCESS_KEY_ID=: aws_access_id
+        AWS_SECRET_ACCESS_KEY=: aws_secret_key
+      dirs:
+        /root/bin: $(mount_bin_runroot)
+        /root/.aws: $(HOMEDir/.aws)
+      workDir: /root
+      sockets:
+        /var/run/docker.sock: dockerSocket
+      cmd:
+        - bash
+        - -ce
+        - |
+          bin/export_aws_creds | tr ' ' '\n'
+
+  - container:
+      image: { ref: $(dindcontainer) }
+      stdOut:
+        CLUSTER_PRIVATE_KEY=: private_key
+      dirs:
+        /root/bin: $(mount_bin_runroot)
+        /root/.ssh: $(HOMEDir/.ssh)
+      workDir: /root
+      sockets:
+        /var/run/docker.sock: dockerSocket
+      envVars:
+        CLUSTER_ID: $(CLUSTER_ID)
+        _cluster_id: $(cluster_id)
+      files:
+        /cmd_1.sh:
+      cmd: [ /cmd_1.sh ]
+
+  - container:
+      image: { ref: $(dindcontainer) }
+      dirs:
+        /root: $(mount_bootstrap_runroot)
+        /root/bin: $(mount_bin_runroot)
+        /root/.ssh: $(HOMEDir/.ssh)
+      workDir: /root
+      sockets:
+        /var/run/docker.sock: dockerSocket
+      envVars:
+        AWS_ACCESS_KEY_ID: $(aws_access_id)
+        AWS_SECRET_ACCESS_KEY: $(aws_secret_key)
+        CLUSTER_PRIVATE_KEY: $(private_key)
+        CLUSTER_ID: $(CLUSTER_ID)
+        _cluster_id: $(cluster_id)
+        USERNAME: $(OS_TYPE)
+        _os_type: (os_type)
+        AWS_DEFAULT_REGION:
+        OWNER_USER: $(USER)
+        OWNER_UID: $(UID)
+        OWNER_GID: $(GID)
+        HOME: $(HOMEPath)
+      files:
+        /cmd_2.sh:
+      cmd: [ /cmd_2.sh ]

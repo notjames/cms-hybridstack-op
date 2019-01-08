@@ -1,0 +1,202 @@
+---
+# DONE
+name: aws
+description: run tests for AWS
+inputs:
+  HOMEPath:
+    string:
+      description: HOME env variable as a string
+  HOMEDir:
+    dir:
+      description: HOME env variable as a directory
+  USER:
+    string:
+      description: USER env variable
+  GID:
+    number:
+      description: GID env var
+  UID:
+    number:
+      description: UID env var
+  CLUSTER_ID:
+    string:
+      description: CLUSTER_ID environment variable
+      default: "nil"
+  CLUSTER_TYPE:
+    string:
+      constraints: { enum: [ manager, managed, nil ] }
+      description: CLUSTER_TYPE environment variable if set.
+      default: "nil"
+  INSTANCE_OS_NAME:
+    string:
+      description: INSTANCE_OS_NAME environment variable if set.
+      default: "centos"
+  INSTANCE_OS_VER:
+    string:
+      description: INSTANCE_OS_VER environment variable if set.
+      default: "7.4"
+  INSTANCE_TYPE:
+    string:
+      description: INSTANCE_TYPE environment variable if set.
+      default: "c4.large"
+  AVAILABILITY_ZONE:
+    string:
+      description: AWS AZ environment variable if set.
+      default: "us-west-2b"
+  AWS_DEFAULT_REGION:
+    string:
+      description: default AWS region environment variable if set.
+      default: "us-west-2"
+  DISK_SIZE_GB:
+    number:
+      description: The environment variable for DISK_SIZE_GB if set.
+      default: 40
+  SSH_LOCATION:
+    string:
+      description: The environment variable for SSH_LOCATION if set.
+      default: "0.0.0.0/0"
+  K8S_NODE_CAPACITY:
+    number:
+      description: Kubernetes node capacity
+      default: 1
+  OS_TYPE:
+    string:
+      description: OS_TYPE environment variable if set.
+      default: centos
+
+  cluster_id:
+    string:
+      constraints: { minLength: 1 }
+      description: Name of the cluster
+      default: "nil"
+  cluster_type:
+    string:
+      constraints: { enum: [ manager, managed, nil ] }
+      description: Define if the cluster being created is a manager or managed cluster.
+      default: "nil"
+  instance_os_name:
+    string:
+      constraints: { minLength: 1 }
+      description: This a required parameter for the make-cluster-nodes script.
+      default: centos
+  instance_os_ver:
+    number:
+      description: distribution version
+      default: 7.4
+  instance_type:
+    string:
+      constraints: { minLength: 1 }
+      description: Instance type. Reference CF template for more information.
+      default: c4.large
+  availability_zone:
+    string:
+      constraints: { minLength: 1 }
+      description: AWS AZ
+      default: us-west-2b
+  aws_default_region:
+    string:
+      constraints: { minLength: 1 }
+      description: default AWS region
+      default: us-west-2
+  disk_size_gb:
+    number:
+      description: AWS instance disk size in Gb.
+      default: 40
+  ssh_location:
+    string:
+      description: AWS ssh_location
+      default: 0.0.0.0/0
+  k8s_node_capacity:
+    number:
+      description: The environment variable for K8S_NODE_CAPACITY if set.
+      default: 1
+  os_type:
+    string:
+      constraints: { minLength: 1 }
+      default: centos
+  githubUsername:
+    string:
+      constraints: { minLength: 1 }
+      description: username for auth
+  githubPassword:
+    string:
+      constraints: { minLength: 1 }
+      description: password for auth (or personal access token)
+      isSecret: true
+
+  mount_bin_runroot:
+    dir:
+      description: the bin directory containing scripts used for all AWS op steps.
+  mount_infra_runroot:
+    dir:
+      description: the mount point path for all things infrasructure
+  mount_bootstrap_runroot:
+    dir:
+      description: the mount point path for all things bootstrap
+  mount_deploy_runroot:
+    dir:
+      description: the mount point path for all things deployment
+  context:
+    dir:
+      description: context for build
+      default: .opspec/aws
+  dockerfile:
+    file:
+      description: DinD dockerfile
+      default: .opspec/aws/Dockerfile
+  dockerSocket:
+    socket:
+      description: access to docker on node
+  dindcontainer:
+    string:
+      description: "dind runtime container"
+      default: "cmc-build:latest"
+
+run:
+  serial:
+    - op:
+        ref: aws/01-infrastructure
+        inputs:
+          HOMEPath:
+          HOMEDir:
+          CLUSTER_ID:
+          cluster_id:
+          CLUSTER_TYPE:
+          cluster_type:
+          INSTANCE_TYPE:
+          instance_type:
+          AVAILABILITY_ZONE:
+          availability_zone:
+          AWS_DEFAULT_REGION:
+          aws_default_region:
+          INSTANCE_OS_NAME:
+          instance_os_name:
+          INSTANCE_OS_VER:
+          instance_os_ver:
+          os_type:
+          mount_bin_runroot:
+          mount_infra_runroot:
+          context:
+          dockerfile:
+          dockerSocket:
+          dindcontainer:
+    - op:
+        ref: aws/02-bootstrap-cmc-cluster
+        inputs:
+          USER:
+          GID:
+          UID:
+          HOMEPath:
+          HOMEDir:
+          CLUSTER_ID:
+          OS_TYPE:
+          AWS_DEFAULT_REGION:
+          aws_default_region:
+          cluster_id:
+          os_type:
+          mount_bin_runroot:
+          mount_bootstrap_runroot:
+          context:
+          dockerfile:
+          dockerSocket:
+          dindcontainer:
